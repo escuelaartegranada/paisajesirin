@@ -221,13 +221,35 @@ export const KahootTimedEngine = ({ onFinish, onQuit }: any) => {
   const kShapes = ['▲', '◆', '●', '■'];
 
   useEffect(() => {
-    // Generate 15 random vocab questions
-    const shuffledVocab = [...ENGLISH_VOCAB].sort(() => 0.5 - Math.random()).slice(0, 15);
+    // Generate 100 random vocab questions
+    const shuffledVocab = Array.from({ length: 100 }, () => ENGLISH_VOCAB[Math.floor(Math.random() * ENGLISH_VOCAB.length)]);
     const generatedQs = shuffledVocab.map(v => {
-      // Pick 3 random wrong options
-      const wrongOpts = ENGLISH_VOCAB.filter(w => w.en !== v.en).sort(() => 0.5 - Math.random()).slice(0, 3).map(w => w.es);
-      const allOpts = [...wrongOpts, v.es].sort(() => 0.5 - Math.random());
-      return { question: v.en, options: allOpts, correct: v.es };
+      const type = Math.floor(Math.random() * 3);
+      let question = v.en;
+      let correct = v.es;
+      let wrongOpts: string[] = [];
+
+      if (type === 0) {
+        // En -> Es
+        wrongOpts = ENGLISH_VOCAB.filter(w => w.en !== v.en).sort(() => 0.5 - Math.random()).slice(0, 3).map(w => w.es);
+        question = v.en;
+        correct = v.es;
+      } else if (type === 1) {
+        // En -> Emoji
+        wrongOpts = ENGLISH_VOCAB.filter(w => w.en !== v.en).sort(() => 0.5 - Math.random()).slice(0, 3).map(w => w.emoji!);
+        question = v.en;
+        correct = v.emoji!;
+      } else {
+        // Emoji -> En
+        wrongOpts = ENGLISH_VOCAB.filter(w => w.en !== v.en).sort(() => 0.5 - Math.random()).slice(0, 3).map(w => w.en);
+        question = v.emoji!;
+        correct = v.en;
+      }
+
+      const allOpts = [...wrongOpts, correct].sort(() => 0.5 - Math.random());
+      
+      // Additional flag to know if question is an emoji to render it larger
+      return { question, options: allOpts, correct, isEmojiQuestion: type === 2 };
     });
     setQuestions(generatedQs);
   }, []);
@@ -313,7 +335,7 @@ export const KahootTimedEngine = ({ onFinish, onQuit }: any) => {
             {timeLeft}
           </div>
           <div className="w-full bg-white shadow-2xl rounded-2xl border-b-8 border-gray-300 flex items-center justify-center p-8 md:p-12 min-h-[200px]">
-            <h2 className="text-4xl md:text-7xl font-black text-center text-gray-900 tracking-tight uppercase break-words pl-12 md:pl-0">
+            <h2 className={`${act.isEmojiQuestion ? 'text-8xl md:text-[120px]' : 'text-4xl md:text-7xl'} font-black text-center text-gray-900 tracking-tight uppercase break-words pl-12 md:pl-0 leading-none`}>
               {act.question}
             </h2>
           </div>
@@ -334,6 +356,8 @@ export const KahootTimedEngine = ({ onFinish, onQuit }: any) => {
                }
              }
 
+             const isEmojiOpt = !/[a-zA-Z]/.test(opt);
+
              return (
                <button 
                  key={i}
@@ -342,7 +366,7 @@ export const KahootTimedEngine = ({ onFinish, onQuit }: any) => {
                  disabled={status !== 'idle'}
                >
                  <span className="text-4xl md:text-6xl mr-4 md:mr-6 drop-shadow-md opacity-80">{kShapes[i % 4]}</span>
-                 <span className="text-2xl md:text-4xl font-black uppercase text-left break-words drop-shadow-sm">{opt}</span>
+                 <span className={`${isEmojiOpt ? 'text-6xl md:text-8xl' : 'text-2xl md:text-4xl'} font-black uppercase text-left break-words drop-shadow-sm`}>{opt}</span>
                </button>
              );
           })}
