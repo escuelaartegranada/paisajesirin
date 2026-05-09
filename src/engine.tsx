@@ -334,10 +334,15 @@ export const KahootTimedEngine = ({ onFinish, onQuit }: any) => {
           <div className={`absolute -top-6 -left-2 md:-left-10 md:-top-10 w-20 h-20 md:w-32 md:h-32 rounded-full flex items-center justify-center border-4 md:border-8 border-white text-4xl md:text-6xl font-black text-white z-20 transition-colors ${timeLeft <= 5 ? 'bg-red-600 shadow-[0_8px_0_rgba(153,27,27,1)] animate-pulse' : 'bg-purple-600 shadow-[0_8px_0_rgba(88,28,135,1)]'}`}>
             {timeLeft}
           </div>
-          <div className="w-full bg-white shadow-2xl rounded-2xl border-b-8 border-gray-300 flex items-center justify-center p-8 md:p-12 min-h-[200px]">
+          <div className="w-full bg-white shadow-2xl rounded-2xl border-b-8 border-gray-300 flex flex-col items-center justify-center p-8 md:p-12 min-h-[200px]">
             <h2 className={`${act.isEmojiQuestion ? 'text-8xl md:text-[120px]' : 'text-4xl md:text-7xl'} font-black text-center text-gray-900 tracking-tight uppercase break-words pl-12 md:pl-0 leading-none`}>
               {act.question}
             </h2>
+            {act.isEmojiQuestion && (
+              <span className="text-2xl md:text-4xl text-gray-500 font-bold uppercase mt-4 tracking-wider text-center pl-12 md:pl-0">
+                {ENGLISH_VOCAB.find(v => v.emoji === act.question)?.es}
+              </span>
+            )}
           </div>
         </div>
 
@@ -357,6 +362,7 @@ export const KahootTimedEngine = ({ onFinish, onQuit }: any) => {
              }
 
              const isEmojiOpt = !/[a-zA-Z]/.test(opt);
+             const matchedVocab = isEmojiOpt ? ENGLISH_VOCAB.find(v => v.emoji === opt) : null;
 
              return (
                <button 
@@ -366,7 +372,12 @@ export const KahootTimedEngine = ({ onFinish, onQuit }: any) => {
                  disabled={status !== 'idle'}
                >
                  <span className="text-4xl md:text-6xl mr-4 md:mr-6 drop-shadow-md opacity-80">{kShapes[i % 4]}</span>
-                 <span className={`${isEmojiOpt ? 'text-6xl md:text-8xl' : 'text-2xl md:text-4xl'} font-black uppercase text-left break-words drop-shadow-sm`}>{opt}</span>
+                 <div className="flex flex-col items-start justify-center flex-1">
+                   <span className={`${isEmojiOpt ? 'text-6xl md:text-8xl' : 'text-2xl md:text-4xl'} font-black uppercase text-left break-words drop-shadow-sm`}>{opt}</span>
+                   {isEmojiOpt && matchedVocab && (
+                      <span className="text-xl md:text-2xl font-bold text-white/80 uppercase mt-2 drop-shadow-sm">{matchedVocab.es}</span>
+                   )}
+                 </div>
                </button>
              );
           })}
