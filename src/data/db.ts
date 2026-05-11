@@ -239,6 +239,16 @@ const generateActivities = () => {
     });
   }
 
+  // 7. Variadas (~100)
+  for(let i=0; i<20; i++) {
+    generated.push({ id: `gen_${idCounter++}`, type: "match", question: "Relaciona para qué ha modificado el ser humano estos paisajes:", pairs: [{ left: "Transporte", right: "Carretera" }, { left: "Comida", right: "Campo de cultivo" }, { left: "Vivienda", right: "Casas" }], theme: themes.personas });
+    generated.push({ id: `gen_${idCounter++}`, type: "match", question: "Relaciona cada acción con el tipo de contaminación que produce:", pairs: [{ left: "Fábricas y humo", right: "Del aire" }, { left: "Coches pitando", right: "Acústica" }, { left: "Basura en el suelo", right: "Del suelo" }, { left: "Plástico en el mar", right: "Del agua" }], theme: themes.contaminacion });
+    generated.push({ id: `gen_${idCounter++}`, type: "multi", question: "¿Qué necesitan los seres vivos para vivir? (Varias opciones correctas)", options: ["Agua", "Comida rápida", "Alimento", "Ropa", "Aire"], correct: ["Agua", "Alimento", "Aire"], theme: themes.sv });
+    generated.push({ id: `gen_${idCounter++}`, type: "image-test", question: "Observa la imagen. ¿Qué tipo de paisaje es este?", image: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=500&auto=format&fit=crop", options: ["Paisaje humanizado", "Paisaje natural"], correct: "Paisaje humanizado", theme: themes.paisaje });
+    generated.push({ id: `gen_${idCounter++}`, type: "image-test", question: "Observa la imagen. ¿Es natural o humanizado?", image: "https://images.unsplash.com/photo-1448375240586-882707db888b?fit=crop&w=500", options: ["Paisaje humanizado", "Paisaje natural"], correct: "Paisaje natural", theme: themes.paisaje });
+    generated.push({ id: `gen_${idCounter++}`, type: "match", question: "Relaciona el elemento con su tipo:", pairs: [{left: "Río", right: "Natural"}, {left: "Carretera", right: "Humanizado"}, {left: "Montaña", right: "Natural"}, {left: "Puente", right: "Humanizado"}], theme: themes.paisaje });
+  }
+
   // Shuffle options in multiple choice so they aren't always in same place
   return generated.map(q => {
     if (q.options && q.options.length > 2) {

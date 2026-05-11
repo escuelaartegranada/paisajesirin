@@ -47,7 +47,7 @@ export default function App() {
 
   const startVaried = () => {
     const variedPool = ACTIVITIES.filter(a => ['match', 'multi', 'image-test'].includes(a.type));
-    setActiveQueue(getRandomElements(variedPool, 20)); // fewer questions for varied
+    setActiveQueue(getRandomElements(variedPool, 100)); // 100 questions for varied
     setIsKahoot(false);
     setScreenWithSound('variedEngine');
   };
