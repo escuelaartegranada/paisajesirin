@@ -144,6 +144,14 @@ export const ACTIVITIES_BASE = [
   { id: "f3", type: "kahoot-en", question: "Busca la palabra que significa 'limpio / limpiar':", options: ["clean", "litter", "river", "road"], correct: "clean", theme: "Vocabulario Inglés" },
   { id: "f4", type: "test", question: "¿Qué intentaba proteger Pedro Pidal?", options: ["Castillos", "Paisajes naturales", "Autopistas", "Edificios"], correct: "Paisajes naturales", theme: "Cuidamos la naturaleza" },
 
+  // G. Variadas (Matching & Image)
+  { id: "v1", type: "match", question: "Relaciona para qué ha modificado el ser humano estos paisajes:", pairs: [{ left: "Transporte", right: "Carretera" }, { left: "Comida", right: "Campo de cultivo" }, { left: "Vivienda", right: "Casas" }], theme: "Personas cambian el paisaje" },
+  { id: "v2", type: "match", question: "Relaciona cada acción con el tipo de contaminación que produce:", pairs: [{ left: "Fábricas y humo", right: "Del aire" }, { left: "Coches pitando", right: "Acústica" }, { left: "Basura en el suelo", right: "Del suelo" }, { left: "Plástico en el mar", right: "Del agua" }], theme: "Contaminación" },
+  { id: "v3", type: "multi", question: "¿Qué necesitan los seres vivos para vivir? (Varias opciones correctas)", options: ["Agua", "Comida rápida", "Alimento", "Ropa", "Aire"], correct: ["Agua", "Alimento", "Aire"], theme: "Seres vivos y materia inerte" },
+  { id: "v4", type: "image-test", question: "Observa la imagen. ¿Qué tipo de paisaje es el de lugares con casas y carreteras?", image: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=500&auto=format&fit=crop", options: ["Paisaje humanizado", "Paisaje natural"], correct: "Paisaje humanizado", theme: "Elementos del paisaje" },
+  { id: "v5", type: "image-test", question: "Observa la imagen. ¿Qué tipo de paisaje es un bosque sin construir?", image: "https://images.unsplash.com/photo-1448375240586-882707db888b?fit=crop&w=500", options: ["Paisaje humanizado", "Paisaje natural"], correct: "Paisaje natural", theme: "Elementos del paisaje" },
+  { id: "v6", type: "match", question: "Relaciona el elemento con su tipo:", pairs: [{left: "Río", right: "Natural"}, {left: "Carretera", right: "Humanizado"}, {left: "Montaña", right: "Natural"}, {left: "Puente", right: "Humanizado"}], theme: "Elementos del paisaje" },
+
   // More Kahoot English
   { id: "k1", type: "kahoot-en", question: "¿Qué significa lake?", options: ["Río", "Lago", "Montaña", "Faro"], correct: "Lago", theme: "Vocabulario Inglés" },
   { id: "k2", type: "kahoot-en", question: "¿Qué significa lighthouse?", options: ["Casa", "Carretera", "Faro", "Puente"], correct: "Faro", theme: "Vocabulario Inglés" },

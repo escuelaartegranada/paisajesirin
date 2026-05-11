@@ -134,6 +134,15 @@ export const HomeScreen = ({ setScreen }: any) => (
         <p className="text-orange-100 font-bold mt-2">Práctica Libre</p>
       </div>
 
+      {/* Varied Activities */}
+      <div onClick={() => setScreen('varied')} className="cursor-pointer bg-teal-500 rounded-[40px] p-6 shadow-2xl flex flex-col items-center justify-center border-b-8 border-teal-700 hover:transform hover:scale-105 transition-all">
+        <div className="w-24 h-24 bg-white/30 rounded-full flex items-center justify-center mb-4">
+          <span className="text-5xl">🧩</span>
+        </div>
+        <h2 className="text-3xl font-black text-white uppercase tracking-wide">Varios</h2>
+        <p className="text-teal-100 font-bold mt-2">Relaciona y más</p>
+      </div>
+
       {/* Mini Exam */}
       <div onClick={() => setScreen('exam')} className="cursor-pointer bg-blue-500 rounded-[40px] p-6 shadow-2xl flex flex-col items-center justify-center border-b-8 border-blue-700 hover:transform hover:scale-105 transition-all">
         <div className="w-24 h-24 bg-white/30 rounded-full flex items-center justify-center mb-4">

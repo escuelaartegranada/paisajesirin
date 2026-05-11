@@ -205,6 +205,245 @@ export const ActivityEngine = ({ activities, onFinish, onQuit, isKahoot = false 
   );
 };
 
+export const VariedEngine = ({ activities, onFinish, onQuit }: any) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [status, setStatus] = useState<'idle' | 'correct' | 'wrong'>('idle');
+  const [stars, setStars] = useState(0);
+  
+  // States for specific types
+  const [multiSelection, setMultiSelection] = useState<string[]>([]);
+  const [matchPairs, setMatchPairs] = useState<{left: string, right: string}[]>([]); // Current matched lines
+  const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
+  
+  const act = activities[currentIndex];
+
+  useEffect(() => {
+    // Reset specific states when changing question
+    setMultiSelection([]);
+    setMatchPairs([]);
+    setSelectedLeft(null);
+    setStatus('idle');
+  }, [currentIndex]);
+
+  // Create stable sorted arrays for match view
+  const [matchLefts, setMatchLefts] = useState<string[]>([]);
+  const [matchRights, setMatchRights] = useState<string[]>([]);
+  useEffect(() => {
+    if (act && act.type === 'match') {
+      setMatchLefts([...act.pairs].map((p: any) => p.left).sort());
+      setMatchRights([...act.pairs].map((p: any) => p.right).sort((a: string, b: string) => a.length - b.length));
+    }
+  }, [act]);
+
+  if (!act) return <div>Cargando...</div>;
+
+  const checkAnswer = () => {
+    if (status !== 'idle') return;
+    
+    let isCorrect = false;
+    
+    if (act.type === 'multi') {
+      const allCorrect = act.correct.every((c: string) => multiSelection.includes(c)) && multiSelection.length === act.correct.length;
+      isCorrect = allCorrect;
+    } else if (act.type === 'match') {
+      const allMatched = act.pairs.every((p: any) => matchPairs.some(m => m.left === p.left && m.right === p.right));
+      isCorrect = allMatched && matchPairs.length === act.pairs.length;
+    }
+    
+    if (isCorrect) {
+      playSound('success');
+      setStatus('correct');
+      setStars(s => s + 1);
+      triggerConfetti();
+    } else {
+      playSound('wrong');
+      setStatus('wrong');
+    }
+  };
+
+  const handleNext = () => {
+    playSound('click');
+    if (currentIndex + 1 < activities.length) {
+      setCurrentIndex(c => c + 1);
+    } else {
+      playSound('fanfare');
+      triggerConfetti();
+      onFinish(stars, activities.length);
+    }
+  };
+
+  const handleMatchSelect = (side: 'left' | 'right', val: string) => {
+    if (status !== 'idle') return;
+    playSound('click');
+
+    if (side === 'left') {
+      if (selectedLeft === val) setSelectedLeft(null);
+      else setSelectedLeft(val);
+    } else {
+      if (selectedLeft) {
+        // Did we already match this right side or left side? remove old match
+        const newMatches = matchPairs.filter(m => m.left !== selectedLeft && m.right !== val);
+        setMatchPairs([...newMatches, { left: selectedLeft, right: val }]);
+        setSelectedLeft(null); // Wait for next selection
+      }
+    }
+  };
+
+  const renderMulti = () => (
+    <div className="flex flex-col gap-4 w-full max-w-2xl mt-4">
+      {act.options.map((opt: string) => {
+        const isSelected = multiSelection.includes(opt);
+        return (
+          <button 
+            key={opt}
+            disabled={status !== 'idle'}
+            onClick={() => {
+              playSound('click');
+              setMultiSelection(prev => isSelected ? prev.filter(p => p !== opt) : [...prev, opt])
+            }}
+            className={`p-6 rounded-2xl border-4 text-2xl font-bold flex justify-between items-center transition-all ${isSelected ? 'bg-teal-500 border-teal-700 text-white' : 'bg-white border-gray-300 hover:border-teal-400'}`}
+          >
+            {opt}
+            <div className={`w-10 h-10 rounded-full border-4 flex items-center justify-center transition-all ${isSelected ? 'border-white bg-teal-400' : 'border-gray-300 bg-gray-100'}`}>
+               {isSelected && <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+            </div>
+          </button>
+        )
+      })}
+    </div>
+  );
+
+  const renderMatch = () => {
+    return (
+      <div className="flex flex-row justify-between w-full max-w-4xl gap-8 relative mt-4">
+        <div className="flex flex-col gap-4 w-1/2">
+          {matchLefts.map((l: string) => {
+             const matchedItem = matchPairs.find(m => m.left === l);
+             const isSelected = selectedLeft === l;
+             let btnClass = isSelected ? 'bg-indigo-500 border-indigo-700 text-white shadow-inner scale-95' 
+                                       : matchedItem ? 'bg-green-100 border-green-300 text-green-900 opacity-60' 
+                                       : 'bg-white border-gray-300 hover:border-indigo-400 shadow-md';
+             return (
+               <button 
+                 key={l}
+                 disabled={status !== 'idle'}
+                 onClick={() => handleMatchSelect('left', l)}
+                 className={`p-6 rounded-2xl border-b-8 text-xl md:text-2xl font-black transition-all text-left uppercase tracking-wide ${btnClass} flex justify-between items-center`}
+               >
+                 {l}
+                 {isSelected && <span className="text-white text-3xl">👉</span>}
+               </button>
+             )
+          })}
+        </div>
+        
+        {/* Draw lines conceptually using color matching or just text? We use text for simplicity */}
+        
+        <div className="flex flex-col gap-4 w-1/2">
+           {matchRights.map((r: string) => {
+             const matchedItem = matchPairs.find(m => m.right === r);
+             let btnClass = matchedItem ? 'bg-green-100 border-green-300 text-green-900 border-b-8' : 'bg-white border-gray-300 border-b-8 shadow-md hover:border-indigo-400';
+             return (
+               <button 
+                 key={r}
+                 disabled={status !== 'idle'}
+                 onClick={() => handleMatchSelect('right', r)}
+                 className={`p-6 rounded-2xl text-xl md:text-2xl font-black transition-all text-left uppercase tracking-wide ${btnClass} flex flex-col justify-center`}
+               >
+                 {matchedItem && <span className="text-sm font-black text-green-700 mb-1 border-b-2 border-green-200 pb-1 w-full opacity-60 flex items-center"><span className="text-xl mr-2">🔗</span> {matchedItem.left}</span>}
+                 {r}
+               </button>
+             )
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  const renderImageTest = () => (
+    <div className="flex flex-col items-center w-full max-w-4xl mt-4">
+      {act.image && <img src={act.image} className="w-[80%] rounded-[30px] shadow-2xl mb-8 border-8 border-white object-cover max-h-[40vh]" alt="View" />}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+        {act.options.map((opt: string) => {
+            let btnClass = 'bg-white text-gray-800 border-gray-300 border-b-8 hover:border-teal-500 shadow-xl';
+            
+            // Image tests auto-check on click
+            if (status !== 'idle') {
+               if (opt === act.correct) btnClass = 'bg-green-500 text-white border-green-700 border-b-8 scale-105';
+               else if (opt === selectedLeft) btnClass = 'bg-red-500 text-white border-red-700 border-b-8'; // using selectedLeft to track answer
+               else btnClass = 'bg-white opacity-40 scale-95 border-gray-200 border-b-8';
+            } else {
+               btnClass += " active:border-b-0 active:translate-y-2 hover:-translate-y-1";
+            }
+
+            return (
+              <button 
+                key={opt}
+                disabled={status !== 'idle'}
+                onClick={() => {
+                  setSelectedLeft(opt);
+                  if (opt === act.correct) {
+                    playSound('success'); setStatus('correct'); setStars(s => s + 1); triggerConfetti();
+                  } else {
+                    playSound('wrong'); setStatus('wrong');
+                  }
+                }}
+                className={`p-8 rounded-[30px] text-2xl md:text-3xl font-black transition-all uppercase tracking-wide flex justify-center items-center ${btnClass}`}
+              >
+                {opt}
+              </button>
+            )
+        })}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen flex flex-col font-sans bg-teal-50 overflow-hidden relative">
+      <div className="absolute top-0 w-full h-96 bg-gradient-to-b from-teal-200 to-transparent"></div>
+      
+      {/* Header */}
+      <div className="relative z-10 p-6 flex justify-between items-center bg-white/80 backdrop-blur-md shadow-md border-b-4 border-teal-200 text-teal-800">
+        <button onClick={() => { playSound('click'); onQuit(); }} className="p-3 bg-white border-2 border-teal-200 rounded-full hover:scale-110 hover:-rotate-6 transition-all shadow-md">
+          <Home size={32} strokeWidth={2.5}/>
+        </button>
+        <span className="font-black text-xl md:text-2xl uppercase tracking-widest bg-teal-100 px-6 py-2 rounded-full border border-teal-300 hidden md:block">
+           Variados {currentIndex + 1} / {activities.length}
+        </span>
+        <div className="flex items-center font-black text-2xl bg-yellow-400 text-yellow-900 border-4 border-white px-5 py-2 rounded-full shadow-md">
+           {stars} <Star className="inline ml-2" size={24} fill="#975a16" />
+        </div>
+      </div>
+
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-start p-4 md:p-8 w-full max-w-5xl mx-auto overflow-y-auto pb-32 mt-4">
+        <div className="w-full bg-white p-6 md:p-10 rounded-[40px] shadow-xl border-b-8 border-teal-200 mb-8 max-w-3xl">
+          <h2 className="text-3xl md:text-5xl font-black text-center text-teal-900 tracking-tight leading-snug">
+            {act.question}
+          </h2>
+        </div>
+        
+        {act.type === 'multi' && renderMulti()}
+        {act.type === 'match' && renderMatch()}
+        {act.type === 'image-test' && renderImageTest()}
+
+        {/* Submit button for Match & Multi */}
+        {(act.type === 'multi' || act.type === 'match') && status === 'idle' && (
+           <button onClick={checkAnswer} className="mt-12 bg-indigo-600 text-white border-b-8 border-indigo-800 active:border-b-0 active:translate-y-2 py-5 px-16 rounded-[40px] font-black text-3xl uppercase tracking-wide shadow-2xl transition-all hover:bg-indigo-500 animate-pulse">
+             Comprobar
+           </button>
+        )}
+
+        {/* Next button */}
+        {status !== 'idle' && (
+           <button onClick={handleNext} className="mt-12 w-full max-w-md bg-green-500 hover:bg-green-400 text-white border-b-8 border-green-700 active:border-b-0 active:translate-y-2 py-6 rounded-[40px] font-black text-3xl flex justify-center items-center uppercase tracking-wide shadow-2xl transition-all animate-bounce">
+             Continuar <ArrowRight className="ml-3" size={32} />
+           </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
 export const KahootTimedEngine = ({ onFinish, onQuit }: any) => {
   const kahootActivities = ACTIVITIES.filter(a => a.type === 'kahoot-en');
   // We want to generate questions like: English word -> 4 Spanish translations

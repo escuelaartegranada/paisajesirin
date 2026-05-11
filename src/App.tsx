@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { HomeScreen, LessonsScreen, LessonInfoScreen, VocabScreen } from './screens';
-import { ActivityEngine, ResultScreen, KahootTimedEngine } from './engine';
+import { ActivityEngine, ResultScreen, KahootTimedEngine, VariedEngine } from './engine';
 import { ACTIVITIES } from './data/db';
 import { playSound } from './audio';
 
@@ -39,10 +39,17 @@ export default function App() {
   };
 
   const startPractice = () => {
-    const practicePool = ACTIVITIES.filter(a => a.type !== 'kahoot-en');
+    const practicePool = ACTIVITIES.filter(a => a.type !== 'kahoot-en' && a.type !== 'match');
     setActiveQueue(getRandomElements(practicePool, 100)); // 100 random questions
     setIsKahoot(false);
     setScreenWithSound('engine');
+  };
+
+  const startVaried = () => {
+    const variedPool = ACTIVITIES.filter(a => ['match', 'multi', 'image-test'].includes(a.type));
+    setActiveQueue(getRandomElements(variedPool, 20)); // fewer questions for varied
+    setIsKahoot(false);
+    setScreenWithSound('variedEngine');
   };
 
   const startExam = () => {
@@ -80,6 +87,12 @@ export default function App() {
       break;
     case 'practice':
       startPractice();
+      break;
+    case 'varied':
+      startVaried();
+      break;
+    case 'variedEngine':
+      content = <VariedEngine activities={activeQueue} onFinish={handleFinish} onQuit={goHome} />;
       break;
     case 'exam':
       startExam();
