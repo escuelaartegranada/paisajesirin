@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Star, ArrowRight, Home, Volume2, ChevronLeft, ChevronRight, Trophy } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { playSound, speakText, stopSpeaking } from './audio';
@@ -228,12 +228,46 @@ export const VariedEngine = ({ activities, onFinish, onQuit }: any) => {
   // Create stable sorted arrays for match view
   const [matchLefts, setMatchLefts] = useState<string[]>([]);
   const [matchRights, setMatchRights] = useState<string[]>([]);
+  
+  const matchContainerRef = useRef<HTMLDivElement>(null);
+  const [lines, setLines] = useState<{x1: number, y1: number, x2: number, y2: number}[]>([]);
+
   useEffect(() => {
     if (act && act.type === 'match') {
       setMatchLefts([...act.pairs].map((p: any) => p.left).sort());
       setMatchRights([...act.pairs].map((p: any) => p.right).sort((a: string, b: string) => a.length - b.length));
     }
   }, [act]);
+
+  useEffect(() => {
+    const updateLines = () => {
+      if (!matchContainerRef.current) return;
+      const containerRect = matchContainerRef.current.getBoundingClientRect();
+      const newLines = [];
+      for (const match of matchPairs) {
+        const leftId = `left-${match.left.replace(/\s+/g, '-')}`;
+        const rightId = `right-${match.right.replace(/\s+/g, '-')}`;
+        const leftEl = document.getElementById(leftId);
+        const rightEl = document.getElementById(rightId);
+        if (leftEl && rightEl) {
+          const lr = leftEl.getBoundingClientRect();
+          const rr = rightEl.getBoundingClientRect();
+          newLines.push({
+            x1: lr.right - containerRect.left,
+            y1: lr.top + lr.height / 2 - containerRect.top,
+            x2: rr.left - containerRect.left,
+            y2: rr.top + rr.height / 2 - containerRect.top,
+          });
+        }
+      }
+      setLines(newLines);
+    };
+    
+    // Slight delay to ensure DOM has updated
+    setTimeout(updateLines, 10);
+    window.addEventListener('resize', updateLines);
+    return () => window.removeEventListener('resize', updateLines);
+  }, [matchPairs, matchLefts, matchRights, currentIndex]);
 
   if (!act) return <div>Cargando...</div>;
 
@@ -315,43 +349,50 @@ export const VariedEngine = ({ activities, onFinish, onQuit }: any) => {
 
   const renderMatch = () => {
     return (
-      <div className="flex flex-row justify-between w-full max-w-4xl gap-8 relative mt-4">
-        <div className="flex flex-col gap-4 w-1/2">
+      <div ref={matchContainerRef} className="flex flex-row justify-between w-full max-w-4xl gap-8 relative mt-4">
+        <svg className="absolute top-0 left-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
+          {lines.map((line, i) => (
+            <line key={i} x1={line.x1} y1={line.y1} x2={line.x2} y2={line.y2} stroke="#4F46E5" strokeWidth="6" strokeLinecap="round" />
+          ))}
+        </svg>
+
+        <div className="flex flex-col gap-4 w-1/2 relative z-10">
           {matchLefts.map((l: string) => {
              const matchedItem = matchPairs.find(m => m.left === l);
              const isSelected = selectedLeft === l;
              let btnClass = isSelected ? 'bg-indigo-500 border-indigo-700 text-white shadow-inner scale-95' 
-                                       : matchedItem ? 'bg-green-100 border-green-300 text-green-900 opacity-60' 
+                                       : matchedItem ? 'bg-indigo-100 border-indigo-300 text-indigo-900 border-indigo-500' 
                                        : 'bg-white border-gray-300 hover:border-indigo-400 shadow-md';
              return (
                <button 
                  key={l}
+                 id={`left-${l.replace(/\s+/g, '-')}`}
                  disabled={status !== 'idle'}
                  onClick={() => handleMatchSelect('left', l)}
-                 className={`p-6 rounded-2xl border-b-8 text-xl md:text-2xl font-black transition-all text-left uppercase tracking-wide ${btnClass} flex justify-between items-center`}
+                 className={`relative p-6 rounded-2xl border-b-8 text-xl md:text-2xl font-black transition-all text-left uppercase tracking-wide ${btnClass} flex justify-between items-center`}
                >
                  {l}
                  {isSelected && <span className="text-white text-3xl">👉</span>}
+                 <div className={`absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border-4 border-white shadow-md z-20 ${isSelected || matchedItem ? 'bg-indigo-500' : 'bg-gray-300'}`}></div>
                </button>
              )
           })}
         </div>
         
-        {/* Draw lines conceptually using color matching or just text? We use text for simplicity */}
-        
-        <div className="flex flex-col gap-4 w-1/2">
+        <div className="flex flex-col gap-4 w-1/2 relative z-10">
            {matchRights.map((r: string) => {
              const matchedItem = matchPairs.find(m => m.right === r);
-             let btnClass = matchedItem ? 'bg-green-100 border-green-300 text-green-900 border-b-8' : 'bg-white border-gray-300 border-b-8 shadow-md hover:border-indigo-400';
+             let btnClass = matchedItem ? 'bg-indigo-100 border-indigo-300 text-indigo-900 border-b-8 border-indigo-500' : 'bg-white border-gray-300 border-b-8 shadow-md hover:border-indigo-400';
              return (
                <button 
                  key={r}
+                 id={`right-${r.replace(/\s+/g, '-')}`}
                  disabled={status !== 'idle'}
                  onClick={() => handleMatchSelect('right', r)}
-                 className={`p-6 rounded-2xl text-xl md:text-2xl font-black transition-all text-left uppercase tracking-wide ${btnClass} flex flex-col justify-center`}
+                 className={`relative p-6 rounded-2xl text-xl md:text-2xl font-black transition-all text-left uppercase tracking-wide ${btnClass} flex flex-col justify-center`}
                >
-                 {matchedItem && <span className="text-sm font-black text-green-700 mb-1 border-b-2 border-green-200 pb-1 w-full opacity-60 flex items-center"><span className="text-xl mr-2">🔗</span> {matchedItem.left}</span>}
                  {r}
+                 <div className={`absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full border-4 border-white shadow-md z-20 ${matchedItem ? 'bg-indigo-500' : 'bg-gray-300'}`}></div>
                </button>
              )
           })}
